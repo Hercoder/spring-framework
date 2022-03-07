@@ -521,37 +521,76 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			/*
+			 * 2 销毁之前的BeanFactory（如果存在），创建新的BeanFactory，核心方法
+			 * 随后加载、解析全部配置文件中的配置，最主要的是将配置文件中的bean定义封装成为BeanDefinition
+			 * 如果开启了注解组件扫描，那么指定目录下使用了注解标注的类同样封装成为BeanDefinition
+			 * 随后将BeanDefinition注册到BeanFactory的相关缓存中，为后续bean实例的初始化做准备（这一步并不会初始化Bean实例）。
+			 */
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			/*
+			 * 3 对新获取的BeanFactory进行一系列配置，这也是applicationContext功能的扩展。
+			 */
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				/*
+				 * 4 默认是一个空的实现，这是留给子类容器实现对beanFactory后续处理的扩展方法
+				 */
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				/*
+				 * 5 实例化所有BeanFactoryPostProcessor（包括其子类 BeanDefinitionRegistryPostProcessor）后处理器
+				 * 并调用相应的回调方法，此时所有 bean 定义——beanDefinition都将已加载，但尚未实例化任何普通 bean。
+				 * 这允许我们重写beanDefinition或添加beanDefinition，修改beanFactory中的beanDefinition的任何可以修改的地方。
+				 */
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				/*
+				 * 6 实例化和注册所有BeanPostProcessor后处理器
+				 * 方便后续创建bean实例的时候的回调方法调用
+				 */
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				/*
+				 * 7 为此上下文容器初始化MessageSource消息资源，用于语言国际化处理
+				 */
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				/*
+				 * 8 为此上下文容器初始化事件广播器，应用事件广播
+				 */
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				/*
+				 * 9 默认是一个空的实现，这是留给子类容器实现的扩展方法
+				 */
 				onRefresh();
 
 				// Check for listener beans and register them.
+				/*
+				 * 10 实例化和注册所有Listener监听器
+				 */
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				/*
+				 * 11 实例化所有剩余的普通非延迟单例bean，核心方法
+				 */
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				/*
+				 * 12 最后一步:发布相应的事件，回调SmartLifecycle.start()容器生命周期方法
+				 */
 				finishRefresh();
 			}
 
@@ -562,18 +601,22 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				}
 
 				// Destroy already created singletons to avoid dangling resources.
+				// 销毁当前beanFactory中所有缓存的单例bean
 				destroyBeans();
 
 				// Reset 'active' flag.
+				// 设置此上下文的'active'标志为false
 				cancelRefresh(ex);
 
 				// Propagate exception to caller.
+				// 将异常传播给调用方
 				throw ex;
 			}
 
 			finally {
 				// Reset common introspection caches in Spring's core, since we
 				// might not ever need metadata for singleton beans anymore...
+				// 清除常见内省缓存
 				resetCommonCaches();
 			}
 		}
