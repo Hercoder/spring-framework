@@ -142,6 +142,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * in the form of a BeanDefinitionRegistry
 	 */
 	public XmlBeanDefinitionReader(BeanDefinitionRegistry registry) {
+		//调用父类AbstractBeanDefinitionReader的构造器
 		super(registry);
 	}
 

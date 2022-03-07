@@ -76,21 +76,35 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	 * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
 	 * @see #initBeanDefinitionReader
 	 * @see #loadBeanDefinitions
+	 * 通过XmlBeanDefinitionReader加载bean的定义
 	 */
 	@Override
 	protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
 		// Create a new XmlBeanDefinitionReader for the given BeanFactory.
+		//为给定的 BeanFactory 创建新的XmlBeanDefinitionReader，用于加载解析配置文件
 		XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Configure the bean definition reader with this context's
 		// resource loading environment.
+		/*配置XmlBeanDefinitionReader*/
+		//设置环境变量对象
 		beanDefinitionReader.setEnvironment(this.getEnvironment());
+		//设置资源加载器resourceLoader，用于加载XML文件到内存中成为Resource。这里设置的是父类AbstractBeanDefinitionReader的属性，
+		//将其设置为当前ClassPathXmlApplicationContext容器对象，因为容器也实现了ResourceLoader接口
 		beanDefinitionReader.setResourceLoader(this);
+		//设置SAX 实体解析器，用于分析Document
+		// <3> 这个适用于解析xml dtd 和 xsd，最终使用的还是 java EntityResolver
+		// 解析 xml 全靠它，xml 转换至 document 对象后，spring 才能创建 BeanDefinitions
+		// (不太重要，可以略过，有兴趣的可以了解)
 		beanDefinitionReader.setEntityResolver(new ResourceEntityResolver(this));
 
 		// Allow a subclass to provide custom initialization of the reader,
 		// then proceed with actually loading the bean definitions.
+		//初始化beanDefinitionReader，允许子类提供自定义初始化方法
 		initBeanDefinitionReader(beanDefinitionReader);
+		// 实际加载 bean 定义的方法，核心方法
+		// <5> 加载 bean，从 xml 读取配置信息
+		// 编写NamespaceHandler和BeanDefinitionParser完成解析工作
 		loadBeanDefinitions(beanDefinitionReader);
 	}
 
@@ -117,14 +131,31 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	 * @see #getConfigLocations
 	 * @see #getResources
 	 * @see #getResourcePatternResolver
+	 *
+	 * 1.首先尝试获取配置文件的Resource数组configResources
+	 * 2.如果configResources为null，那么获取配置文件路径字符串数组configLocations，在此前最外层的setConfigLocations方法中已经初始化了。非web容器第一次进来默认就是走的这个逻辑。
 	 */
 	protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
+		//获取配置文件的Resource数组，该属性在ClassPathXmlApplicationContext中，默认为null
+		//在前面的setConfigLocations方法中解析的是configLocations配置文件路径字符串数组，注意区分
+
+		// tips：
+		// getConfigResources  和 getConfigLocations 区别是 new ClassPathXmlApplication(xxx.xml) 时候，
+		// 提供了多个构造器，一个是通过 xml，另一个可以指定 xx.class 对象，为什么呢？
+		// 这里和 ClassPathResource 有关，ClassPathResource 里面有可以指定一个 class 对象，和 classLoader，用于加载资源
+		// 优先使用 class，没有才用 classLoader
+
 		Resource[] configResources = getConfigResources();
 		if (configResources != null) {
+			//调用reader自己的loadBeanDefinitions方法，加载bean 的定义
 			reader.loadBeanDefinitions(configResources);
 		}
+		//获取配置文件路径数组，在此前最外层的setConfigLocations方法中已经初始化了
+		//非web容器第一次进来默认就是走的这个逻辑
 		String[] configLocations = getConfigLocations();
 		if (configLocations != null) {
+			//调用reader自己的loadBeanDefinitions方法，加载bean 的定义
+			//内部会从资源路径字符串处加载资源成为Resource，从还是会调用上面的loadBeanDefinitions方法
 			reader.loadBeanDefinitions(configLocations);
 		}
 	}

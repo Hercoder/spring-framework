@@ -179,6 +179,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Create a new AbstractBeanFactory.
+	 * AbstractBeanFactory的构造器，将会初始化相关属性容器
 	 */
 	public AbstractBeanFactory() {
 	}

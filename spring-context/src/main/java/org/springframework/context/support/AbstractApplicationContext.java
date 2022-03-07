@@ -702,10 +702,26 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @return the fresh BeanFactory instance
 	 * @see #refreshBeanFactory()
 	 * @see #getBeanFactory()
+	 *
+	 * obtainFreshBeanFactory方法是非常重要的一个方法，将会销毁之前的BeanFactory（如果存在），
+	 * 创建新的BeanFactory，随后加载、解析全部配置文件中的配置，最主要的是将配置文件中的bean定义封装成对应的Java的bean定义对象——BeanDefinition
+	 * （如果开启了component-scan注解组件扫描，那么也会将base-package指定目录下使用了注解标注的类同样封装成为BeanDefinition），
+	 * 随后将BeanDefinition注册到BeanFactory的相关缓存中（主要是beanDefinitionNames、beanDefinitionMap、aliasMap），
+	 * 为后续bean实例的初始化做准备（这一步并不会初始化Bean实例）。
+	 *
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+		// 关闭以前的 beanFactory（如果存在），并初始化一个新的 beanFactory
 		refreshBeanFactory();
+		// 返回最新初始化的beanFactory
 		return getBeanFactory();
+
+		/**
+		 * 非web应用下，两子类AbstractRefreshableApplicationContext和GenericXmlApplicationContext都提供了refreshBeanFactory方法的不同实现，
+		 * 而我们目前学习的IoC容器ClassPathXmlApplicationContext又是属于AbstractRefreshableApplicationContext的子类，
+		 * 因此我们直接看AbstractRefreshableApplicationContext提供的实现。
+		 *
+		 */
 	}
 
 	/**
@@ -1125,8 +1141,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * while the context's BeanFactory is still active.
 	 * @see #getBeanFactory()
 	 * @see org.springframework.beans.factory.config.ConfigurableBeanFactory#destroySingletons()
+	 *
+	 * 销毁容器中所有缓存的单例Bean，并且此过程中会进行销毁回调
+	 *
 	 */
 	protected void destroyBeans() {
+		//获取beanFactory实例，然后调用destroySingletons方法销毁所有单例bean
+		//并且还会进行销毁回调（如果设置了）
 		getBeanFactory().destroySingletons();
 	}
 

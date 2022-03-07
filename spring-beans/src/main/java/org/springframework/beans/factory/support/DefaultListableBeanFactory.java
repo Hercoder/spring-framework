@@ -145,6 +145,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	private String serializationId;
 
 	/** Whether to allow re-registration of a different definition with the same name. */
+	// 是否允许重新注册具有相同名称的不同定义，即覆盖，默认为true
 	private boolean allowBeanDefinitionOverriding = true;
 
 	/** Whether to allow eager class loading even for lazy-init beans. */
@@ -196,8 +197,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Create a new DefaultListableBeanFactory with the given parent.
 	 * @param parentBeanFactory the parent BeanFactory
+	 *
+	 * 使用给定父级创建新的beanFactory
 	 */
 	public DefaultListableBeanFactory(@Nullable BeanFactory parentBeanFactory) {
+		//调用父类AbstractAutowireCapableBeanFactory的构造器
 		super(parentBeanFactory);
 	}
 
@@ -1080,10 +1084,20 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		clearByTypeCache();
 	}
 
+	/**
+	 * 我们说过ApplicationContext扩展了BeanFactory，但是这不代表BeanFactory的实现没有作用了，虽然它们属于BeanFactory的两个分支，
+	 * 但实际上ApplicationContext容器初始化过程中的核心Bean定义的加载、注册、销毁等功能还是使用此前的BeanFactory的古老实现类DefaultListableBeanFactory的源代码来实现的，
+	 * 因此ApplicationContext容器的内部还持有一个BeanFactory容器，实现了代码的复用，当然DefaultListableBeanFactory也可以单独作为容器使用。现在我们进入原始BeanFactory的uml体系：
+	 *
+	 */
 	@Override
 	public void destroySingletons() {
+		//调用父类的方法销毁单例bean，并且进行销毁回调（如果设置了）
 		super.destroySingletons();
+		//清空DefaultListableBeanFactory类自己的manualSingletonNames属性集合
+		//即清空所有手动注册的bean，所谓手动注册，就是调用registerSingleton(String beanName, Object singletonObject)方法注册的bean
 		updateManualSingletonNames(Set::clear, set -> !set.isEmpty());
+		//删除有关按类型映射的任何缓存，即清空allBeanNamesByType和singletonBeanNamesByType集合
 		clearByTypeCache();
 	}
 
