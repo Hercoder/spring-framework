@@ -149,6 +149,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * If none is supplied, a default SimpleApplicationEventMulticaster is used.
 	 * @see org.springframework.context.event.ApplicationEventMulticaster
 	 * @see org.springframework.context.event.SimpleApplicationEventMulticaster
+	 *
+	 * 硬编码指定的beanFactory中的自定义ApplicationEventMulticaster 的beanName
+	 * 如果未提供自定义的广播器，则使用默认的SimpleApplicationEventMulticaster
 	 */
 	public static final String APPLICATION_EVENT_MULTICASTER_BEAN_NAME = "applicationEventMulticaster";
 
@@ -211,6 +214,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	private MessageSource messageSource;
 
 	/** Helper class used in event publishing. */
+	// 保存事件发布中使用的帮助器类
 	@Nullable
 	private ApplicationEventMulticaster applicationEventMulticaster;
 
@@ -614,6 +618,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				/*
 				 * 11 实例化所有剩余的普通非延迟单例bean，核心方法
 				 */
+				/**
+				 * finishBeanFactoryInitialization是refresh方法中另一个非常重要的方法。该方法用于实例化所有非延迟加载的普通单例bean，此前一些特殊的bean，
+				 * 比如实现了BeanFactoryPostProcessor、BeanPostProcessor、ApplicationEventMulticaster、ApplicationListener等接口的bean定义在前面的方法中已被实例化了。
+
+				 */
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
@@ -957,10 +966,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * Initialize the ApplicationEventMulticaster.
 	 * Uses SimpleApplicationEventMulticaster if none defined in the context.
 	 * @see org.springframework.context.event.SimpleApplicationEventMulticaster
+	 *
+	 * 应用事件广播器的功能也很直白，就是进行ApplicationContext事件广播。当产生某一个ApplicationContext事件的时候，会将该事件委托广播器调用multicastEvent方法，
+	 * 就像一个广播一样通知广播器内部保存的所有监听器，遍历并对每一个监听器调用listener.onApplicationEvent方法传递该事件，而后续的事件处理则是由每一个监听器自己的内部逻辑决定的。
+	 *
+	 *
+	 * 初始化 ApplicationEventMulticaster
 	 */
 	protected void initApplicationEventMulticaster() {
+		//获取beanFactory
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+		// 本地工厂(忽略父工厂)，如果包含名为"applicationEventMulticaster"的bean定义
 		if (beanFactory.containsLocalBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME)) {
+			//那么将该beanName的bean定义作为ApplicationEventMulticaster类型尝试初始化并赋给applicationEventMulticaster属性
 			this.applicationEventMulticaster =
 					beanFactory.getBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, ApplicationEventMulticaster.class);
 			if (logger.isTraceEnabled()) {
@@ -968,7 +986,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			}
 		}
 		else {
+			//新建一个SimpleApplicationEventMulticaster实例，赋给applicationEventMulticaster属性
 			this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
+			//将初始化的广播器手动注册为一个名为"applicationEventMulticaster"的单例bean实例，因此我们在Spring管理的bean中也可以引入该对象
 			beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);
 			if (logger.isTraceEnabled()) {
 				logger.trace("No '" + APPLICATION_EVENT_MULTICASTER_BEAN_NAME + "' bean, using " +
@@ -1009,6 +1029,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>This implementation is empty.
 	 * @throws BeansException in case of errors
 	 * @see #refresh()
+	 *
+	 * 子类容器可以重写用于添加特定的上下文的刷新工作，比如在普通单例bean实例化之前，进行特殊bean的初始化。非web应用中该方法没有实现，web应用中某些子类则会重写该方法。
 	 */
 	protected void onRefresh() throws BeansException {
 		// For subclasses: do nothing by default.
@@ -1017,6 +1039,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Add beans that implement ApplicationListener as listeners.
 	 * Doesn't affect other listeners, which can be added without being beans.
+	 *
+	 * registerListeners方法用于实例化并注册所有的Listener，即监听器。监听器的来源有两个：一个是调用addApplicationListener方法手动添加的listener，
+	 * 它们被添加到AbstractApplicationContext的applicationListeners集合中，另一个就是添加的ApplicationListener类型的普通bean定义，
+	 * 在registerListeners方法中会从beanFactory中找出所有的ApplicationListener类型的bean定义并初始化。
+	 *
+	 * 注册所有监听器之后会发布所有的早期的应用程序事件，非web应用默认没有早期事件。
 	 */
 	protected void registerListeners() {
 		// Register statically specified listeners first.
@@ -1044,9 +1072,23 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Finish the initialization of this context's bean factory,
 	 * initializing all remaining singleton beans.
+	 *
+	 * 完成此上下文的bean工厂的初始化，初始化所有剩余的非延迟加载的普通单例bean
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
+
 		// Initialize conversion service for this context.
+
+		/*
+		 * 1 首先尝试为此上下文初始化ConversionService转换服务的bean定义
+		 *
+		 * 通常，这里的转换服务是配合springMVC使用的，用于将前端传递过来的指定改格式的字符串数据按照自定义转换规则转换成后端接口的类型
+		 * 比如传递String类型的指定时间格式到后台可以转换为Date类型，但是我们一般只需要定义Converter就行了
+		 *
+		 * 这里设置的是AbstractBeanFactory的conversionService属性，如果没有指定conversionService的bean
+		 * 那么普通spring项目默认也不会指定默认值，boot项目会制定默认注册一个ApplicationConversionService服务
+		 */
+		//如果beanFactory包含名为"conversionService"的bean定义，并且该bean定义实现了ConversionService接口
 		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
 			beanFactory.setConversionService(
