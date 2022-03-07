@@ -35,6 +35,8 @@ public class SimplePropertyNamespaceHandlerWithExpressionLanguageTests {
 	@Test
 	public void combineWithExpressionLanguage() {
 		ApplicationContext applicationContext =
+				// 对于 ClassPathXmlApplicationContext，默认就是加载项目的 classpath 路径下面的配置文件，可以不加上“classpath:”前缀；
+				// 但是如果要使用绝对路径，就必须需要加上“file:”前缀，这是绝对路径。
 				new ClassPathXmlApplicationContext("simplePropertyNamespaceHandlerWithExpressionLanguageTests.xml",
 						getClass());
 		ITestBean foo = applicationContext.getBean("foo", ITestBean.class);

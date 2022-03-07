@@ -191,14 +191,19 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	 */
 	public ClassPathXmlApplicationContext(String[] paths, Class<?> clazz, @Nullable ApplicationContext parent)
 			throws BeansException {
-
+		// 1 设置父上下文容器，默认为null
+		// 设置 资源解析器 和 资源加载器
 		super(parent);
 		Assert.notNull(paths, "Path array must not be null");
 		Assert.notNull(clazz, "Class argument must not be null");
-		this.configResources = new Resource[paths.length];
+		int len = paths.length;
+		this.configResources = new Resource[len];
 		for (int i = 0; i < paths.length; i++) {
+			// 一般来说，我们项目的配置文件及静态资源都会放置在resources目录下
+			// 获取到了Resource对象也就等于获取到了该资源文件，后面可以根据方法的定义对文件进行相关操作。
 			this.configResources[i] = new ClassPathResource(paths[i], clazz);
 		}
+		// 核心方法
 		refresh();
 	}
 
