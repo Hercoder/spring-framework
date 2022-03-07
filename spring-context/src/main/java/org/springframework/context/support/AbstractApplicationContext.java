@@ -181,12 +181,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	private final List<BeanFactoryPostProcessor> beanFactoryPostProcessors = new ArrayList<>();
 
 	/** System time in milliseconds when this context started. */
+	// 此上下文启动时的系统时间（毫秒）
 	private long startupDate;
 
 	/** Flag that indicates whether this context is currently active. */
+	// 原子变量，指示此上下文当前是否处于活动状态的标记
 	private final AtomicBoolean active = new AtomicBoolean();
 
 	/** Flag that indicates whether this context has been closed already. */
+	// 原子变量，指示此上下文是否已关闭的标记
 	private final AtomicBoolean closed = new AtomicBoolean();
 
 	/** Synchronization monitor for the "refresh" and "destroy". */
@@ -215,10 +218,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	private final Set<ApplicationListener<?>> applicationListeners = new LinkedHashSet<>();
 
 	/** Local listeners registered before refresh. */
+	// 刷新容器前注册的本地监听器集合
 	@Nullable
 	private Set<ApplicationListener<?>> earlyApplicationListeners;
 
 	/** ApplicationEvents published before the multicaster setup. */
+	// 早期发布事件集合
 	@Nullable
 	private Set<ApplicationEvent> earlyApplicationEvents;
 
@@ -312,6 +317,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * form, allowing for further customization.
 	 * <p>If none specified, a default environment will be initialized via
 	 * {@link #createEnvironment()}.
+	 *
+	 * 获取环境
+	 * eg: System.setProperty("config", "config");
 	 */
 	@Override
 	public ConfigurableEnvironment getEnvironment() {
@@ -625,6 +633,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Prepare this context for refreshing, setting its startup date and
 	 * active flag as well as performing any initialization of property sources.
+	 * 用于初始化容器之前的准备工作，比如设置Spring容器的启动日期和活动标志以及验证必须属性等工作。
 	 */
 	protected void prepareRefresh() {
 		// Switch to active.
@@ -642,28 +651,44 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Initialize any placeholder property sources in the context environment.
+		/*
+		 * 在上下文环境中初始化任何其他属性源，默认空方法，这是留给子类的实现的扩展点
+		 * 非web容器什么也不做，web容器就会重写该方法
+		 * 我们也可以自定义子类，重写该方法并添加必须属性，下面的步骤就会校验
+		 */
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
+		/*
+		 * 检验标记为必须存在的所有属性值在环境变量中是否可解析（是否存在/不为null）
+		 * 如果对应的value为null，那么抛出MissingRequiredPropertiesException异常
+		 */
 		getEnvironment().validateRequiredProperties();
 
+		// TODO not care
+
 		// Store pre-refresh ApplicationListeners...
+		// 存储早期的应用监听器列表（此前已经初始化的监听器）
 		if (this.earlyApplicationListeners == null) {
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
 		}
 		else {
 			// Reset local application listeners to pre-refresh state.
+			//将本地应用程序监听器重置为预刷新状态
 			this.applicationListeners.clear();
 			this.applicationListeners.addAll(this.earlyApplicationListeners);
 		}
 
 		// Allow for the collection of early ApplicationEvents,
 		// to be published once the multicaster is available...
+		// 初始化早期事件集合
 		this.earlyApplicationEvents = new LinkedHashSet<>();
 	}
 
 	/**
+	 * 目的是初始化任何其他属性源，或者对属性源设置必须属性，添加环境变量，设置profile激活环境等操作。
+	 *
 	 * <p>Replace any stub property sources with actual instances.
 	 * @see org.springframework.core.env.PropertySource.StubPropertySource
 	 * @see org.springframework.web.context.support.WebApplicationContextUtils#initServletPropertySources

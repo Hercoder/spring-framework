@@ -61,6 +61,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	@Nullable
 	private String valueSeparator = SystemPropertyUtils.VALUE_SEPARATOR;
 
+	// AbstractPropertyResolver的属性，表示启动时必须存在的属性名集合
 	private final Set<String> requiredProperties = new LinkedHashSet<>();
 
 
@@ -140,14 +141,22 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		Collections.addAll(this.requiredProperties, requiredProperties);
 	}
 
+	/**
+	 * 校验指定的必须存在的属性是否都有对应的属性值，即是否都存在。
+	 */
 	@Override
 	public void validateRequiredProperties() {
+		// 初始化一个MissingRequiredPropertiesException异常对象
 		MissingRequiredPropertiesException ex = new MissingRequiredPropertiesException();
+		// 遍历必须存在的属性名集合
 		for (String key : this.requiredProperties) {
+			// 从属性源中尝试获取每一个属性，如果为null，即没有获取到
 			if (this.getProperty(key) == null) {
+				//异常实例添加这个key
 				ex.addMissingRequiredProperty(key);
 			}
 		}
+		//如果异常实例中的key不为null，那么说明存在没有值的属性，那么抛出异常
 		if (!ex.getMissingRequiredProperties().isEmpty()) {
 			throw ex;
 		}

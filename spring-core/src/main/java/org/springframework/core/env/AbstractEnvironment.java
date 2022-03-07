@@ -514,8 +514,13 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 		this.propertyResolver.setRequiredProperties(requiredProperties);
 	}
 
+	/**
+	 * 校验指定的必须存在的属性是否都有对应的属性值，即是否都存在。
+	 * @throws MissingRequiredPropertiesException
+	 */
 	@Override
 	public void validateRequiredProperties() throws MissingRequiredPropertiesException {
+		//继续调用AbstractPropertyResolver的同名方法
 		this.propertyResolver.validateRequiredProperties();
 	}
 
