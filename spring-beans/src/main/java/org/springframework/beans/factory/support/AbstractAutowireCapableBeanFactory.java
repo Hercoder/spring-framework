@@ -283,6 +283,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 *
 	 * 忽略给定依赖接口的setter自动装配，这通常被应用程序上下文用于注册。
 	 *
+	 * beanFactory的ignoreDependencyType方法用于忽略该类型及其子类作为参数的setter自动注入设置（byName或者byType），
+	 * 不能忽略constructor的自动注入。相比于ignoreDependencyInterface方法，ignoreDependencyType方法范围更广。
+	 * 在后面的doCreateBean方法中我们就会见到这两个扩展点！
+	 *
+	 *
 	 */
 	public void ignoreDependencyInterface(Class<?> ifc) {
 		this.ignoredDependencyInterfaces.add(ifc);

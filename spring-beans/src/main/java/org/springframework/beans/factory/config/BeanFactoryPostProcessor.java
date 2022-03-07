@@ -58,6 +58,13 @@ import org.springframework.beans.BeansException;
  * @since 06.07.2003
  * @see BeanPostProcessor
  * @see PropertyResourceConfigurer
+ *
+ * BeanFactoryPostProcessor同样作为Spring对外提供的最重要的扩展点之一。
+ * 它的postProcessBeanFactory回调方法用于在应用程序上下文的标准初始化后修改其内部 bean 工厂。此时所有 bean 定义都将已加载，但尚未实例化任何 bean。
+ * 也就是说，这允许我们重写beandefinition或添加beandefinition，修改beanFactory中的beandefinition的任何可以修改的地方。
+ *
+ * 而前面学习的BeanPostProcessor扩展接口则用于管理已经被实例化之后的bean实例。因此，BeanFactoryPostProcessor的回调比BeanPostProcessor要早。
+ * 它属于一个比较早期的扩展点
  */
 @FunctionalInterface
 public interface BeanFactoryPostProcessor {
@@ -69,6 +76,9 @@ public interface BeanFactoryPostProcessor {
 	 * properties even to eager-initializing beans.
 	 * @param beanFactory the bean factory used by the application context
 	 * @throws org.springframework.beans.BeansException in case of errors
+	 *
+	 * 在应用程序上下文的标准初始化后修改其内部 bean 工厂。所有 bean 定义都将已加载，但尚未实例化任何 bean。
+	 * 这允许重写或添加属性，修改 bean 定义任何可以修改的地方。
 	 */
 	void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException;
 
