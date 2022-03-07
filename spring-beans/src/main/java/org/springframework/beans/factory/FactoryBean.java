@@ -61,6 +61,17 @@ import org.springframework.lang.Nullable;
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.aop.framework.ProxyFactoryBean
  * @see org.springframework.jndi.JndiObjectFactoryBean
+ *
+ * FactoryBean 是一种特殊的 bean，它是个工厂bean，它本身的创建以及生命周期仍然交给Spring容器管理，但是它可以自定义创建任何其他类型 bean 实例。
+ * 我们可以通过实现FactoryBean接口，然后自定义需要返回的bean实例逻辑，通过调用getObject() 方法即可返回实例。
+ *
+ *
+ * 从Spring中获取FactoryBean实例以及getObject自定义实例的方式如下，假设我们自定义的FactoryBean的name为"abc"：
+ *
+ * getBean(“abc”)方法，实际上返回的就是FactoryBean通过 getObject() 方法返回的自定义的实例。
+ * getBean("&abc")方法，即加上&前缀，这样才能获取FactoryBean本身的实例。
+ *
+ * FactoryBean的getObject() 方法返回的自定义实例同样具有“作用域”这一属性，但是会受到FactoryBean本身的scope属性的影响：
  */
 public interface FactoryBean<T> {
 

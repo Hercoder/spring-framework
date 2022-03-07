@@ -71,6 +71,8 @@ public interface BeanPostProcessor {
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet
 	 *
 	 * bean实例化以及依赖注入完毕之后，initMethod方法调用完毕之前调用
+	 * 返回 null 后续 BeanPostProcessors 不会调用
+	 * 且如果applyBeanPostPorcessorsBeforeInstantiation方法返回值不为null，才会调用applyBeanPostProcessAfterIntialization方法
 	 */
 	@Nullable
 	default Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {

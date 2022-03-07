@@ -33,6 +33,17 @@ package org.springframework.beans.factory;
  * the plain {@link FactoryBean} interface. New methods might be added
  * to this extended interface even in point releases.
  *
+ * SmartFactoryBean是一类特殊的FactoryBean，用来对getObject方法的执行时机进行扩展控制，
+ * 控制对于FactoryBean的getObject方法创建的对象是否需要在容器初始化时同时和FactoryBean实例本身一并急切的初始化。
+ *
+ *
+ * 普通的FactoryBean的getObject方法创建的对象是在第一次获取的时候初始化的，如果我们想要在创建FactoryBean实例之后一并急切的初始化它的getObject方法返回的对象，
+ * 那么实现SmartFactoryBean接口并重写isEagerInit方法返回true即可（前提是FactoryBean本身是非延迟单例类型）。isEagerInit方法默认返回false，即非急切初始化。
+ *
+ *
+ * 实际上，SmartFactoryBean接口主要用于框架内部。通常，应用提供的FactoryBean接口实现应当只需要实现简单的FactoryBean接口即可，我们作为Spring框架的使用者，SmartFactoryBean接口基本用不到
+ *
+ *
  * @author Juergen Hoeller
  * @since 2.0.3
  * @param <T> the bean type
