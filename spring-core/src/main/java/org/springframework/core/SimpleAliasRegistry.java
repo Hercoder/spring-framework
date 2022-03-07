@@ -210,6 +210,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 		String canonicalName = name;
 		// Handle aliasing...
 		String resolvedName;
+		//很简单，就是循环的从别名映射缓存中获取值，如果某次获取的值为null，那么这个"别名"就是真的名称
 		do {
 			resolvedName = this.aliasMap.get(canonicalName);
 			if (resolvedName != null) {

@@ -1064,30 +1064,51 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @return a (potentially merged) RootBeanDefinition for the given bean
 	 * @throws NoSuchBeanDefinitionException if there is no bean with the given name
 	 * @throws BeanDefinitionStoreException in case of an invalid bean definition
+	 *
+	 * 非web应用通常没有父BeanFactory，但是在web应用中的，Spring 的 BeanFactory 是 “父工厂”，
+	 * Spring MVC 的 BeanFactory 就是 “子工厂”，因此要需要注意。
 	 */
 	@Override
 	public BeanDefinition getMergedBeanDefinition(String name) throws BeansException {
+		//返回 bean 名称，必要时删除&引用前缀，并解析别名为规范名称。
 		String beanName = transformedBeanName(name);
 		// Efficiently check whether bean definition exists in this factory.
+		// 如果在当前 BeanFactory 中找不到给定名称的bean定义，将会考虑从父工厂中查找bean定义
 		if (!containsBeanDefinition(beanName) && getParentBeanFactory() instanceof ConfigurableBeanFactory) {
+			//从父工厂中查找并且合并bean定义
 			return ((ConfigurableBeanFactory) getParentBeanFactory()).getMergedBeanDefinition(beanName);
 		}
-		// Resolve merged bean definition locally.
+		// Resolve merged bean definition locally
+		// 否则，在本地工厂解析合并的 bean 定义。
 		return getMergedLocalBeanDefinition(beanName);
 	}
 
+	/**
+	 * 确定给定名称的 bean 是否是FactoryBean
+	 * @param name the name of the bean to check
+	 * @return
+	 * @throws NoSuchBeanDefinitionException
+	 */
 	@Override
 	public boolean isFactoryBean(String name) throws NoSuchBeanDefinitionException {
+		//确定真实的beanName(必要时删除&引用前缀，并解析别名为规范名称。)
 		String beanName = transformedBeanName(name);
+		//尝试获取bean实例缓存，不允许创建早期引用
 		Object beanInstance = getSingleton(beanName, false);
+		//如果不为null，那么判断是否属于FactoryBean类型并返回
 		if (beanInstance != null) {
 			return (beanInstance instanceof FactoryBean);
 		}
 		// No singleton instance found -> check bean definition.
+		//到这里，说明还没有被初始化，那么检查bean定义
+		//如果工厂中没有该beanName的bean定义，并且父工厂属于ConfigurableBeanFactory，非web环境下一般父工厂都为null
 		if (!containsBeanDefinition(beanName) && getParentBeanFactory() instanceof ConfigurableBeanFactory) {
 			// No bean definition found in this factory -> delegate to parent.
+			//委托到父工厂中查找
 			return ((ConfigurableBeanFactory) getParentBeanFactory()).isFactoryBean(name);
 		}
+		//到这里还没有返回
+		//通过该beanName的MergedBeanDefinition来检查对应的Bean是否为FactoryBean
 		return isFactoryBean(beanName, getMergedLocalBeanDefinition(beanName));
 	}
 
@@ -1196,8 +1217,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * and resolving aliases to canonical names.
 	 * @param name the user-specified name
 	 * @return the transformed bean name
+	 *
+	 * 用于转换、返回bean的名称，必要时删除全部&引用前缀，并解析别名为规范名称。
 	 */
 	protected String transformedBeanName(String name) {
+
+		//首先调用transformedBeanName的方法去除全部"&" 前缀
+		//随后调用canonicalName方法将别名解析为规范名称
 		return canonicalName(BeanFactoryUtils.transformedBeanName(name));
 	}
 
@@ -1606,12 +1632,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Check whether the given bean is defined as a {@link FactoryBean}.
+	 *  通过该beanName的MergedBeanDefinition来检查对应的Bean是否为FactoryBean
+	 *
 	 * @param beanName the name of the bean
 	 * @param mbd the corresponding bean definition
 	 */
 	protected boolean isFactoryBean(String beanName, RootBeanDefinition mbd) {
+		//获取isFactoryBean属性
 		Boolean result = mbd.isFactoryBean;
+		//如果该属性还没有赋值
 		if (result == null) {
+			//那么预测指定 bean 的最终 bean 类型是否是FactoryBean类型
 			Class<?> beanType = predictBeanType(beanName, mbd, FactoryBean.class);
 			result = (beanType != null && FactoryBean.class.isAssignableFrom(beanType));
 			mbd.isFactoryBean = result;

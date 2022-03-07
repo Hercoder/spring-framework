@@ -37,6 +37,12 @@ package org.springframework.beans.factory;
  * implement {@link org.springframework.context.Lifecycle} instead which offers
  * a richer model for runtime management and allows for phased startup/shutdown.
  *
+ *
+ * SmartInitializingSingleton是一类特殊的普通单例对象，对于非延迟初始化的SmartInitializingSingleton类型的单例bean，
+ * 在实例化和初始化完毕之后会回调afterSingletonsInstantiated方法！当然，
+ * 该方法的回调是在所有剩余的非延迟加载的单例bean实例化以及初始化完毕之后进行回调的，属于非常晚期的回调了。
+ *
+ *
  * @author Juergen Hoeller
  * @since 4.1
  * @see org.springframework.beans.factory.config.ConfigurableListableBeanFactory#preInstantiateSingletons()
