@@ -200,6 +200,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	@Override
 	public Object getBean(String name) throws BeansException {
+		//调用doGetBean方法
+		//bean预期的类型requiredType和使用的显式参数args都传递null
 		return doGetBean(name, null, null, false);
 	}
 
@@ -230,6 +232,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Return an instance, which may be shared or independent, of the specified bean.
+	 *
+	 * 在Spring中，一般真正执行相关逻辑的方法都会以do开头。
+	 * 这个方法是我们重点关注的方法，我们将会使用大量的篇幅来解析Spring具体是如何创建对象的。
+	 *
 	 * @param name the name of the bean to retrieve
 	 * @param requiredType the required type of the bean to retrieve
 	 * @param args arguments to use when creating a bean instance using explicit arguments
@@ -248,6 +254,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
+		// 尝试直接从缓存中获取实例sharedInstance，允许早期实例创建。如果从一级缓存singletonObjects中获取不到，会判断是否当前实例是否正在创建中，
+		// 如果在创建中，说明出现了循环引用，此时从二级缓存earlySingletonObjects获取，还是获取不到，
+		// 那么尝试从三级缓存singletonFactories中获取早期的bean实例放入二级缓存earlySingletonObjects，
+		// 随后删除对应的三级缓存（Spring中一个bean实例只能出现在某一级别的缓存中，和普通的“缓存”不一样）。
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
@@ -265,6 +275,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
+			// 如果指定beanName是 prototy bean，并且当前正在创建中（在当前线程内），而现在又在被创建，说明出现了循环引用，那么抛出异常。
+			// Spring可以帮我们解决setter方法和注解反射的循环依赖注入，但是互相依赖的两个bean不能都是prototype原型的
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
@@ -1812,6 +1824,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Get the object for the given bean instance, either the bean
 	 * instance itself or its created object in case of a FactoryBean.
+	 * 如果是普通Bean则会直接返回传入的sharedInstance本身。
+	 * 如果是FactoryBean则根据传递的参数beanName判断可能返回FactoryBean实例本身或者FactoryBean.getObject方法返回的实例
 	 * @param beanInstance the shared bean instance
 	 * @param name the name that may include factory dereference prefix
 	 * @param beanName the canonical bean name
@@ -1823,6 +1837,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		// Don't let calling code try to dereference the factory if the bean isn't a factory.
 		if (BeanFactoryUtils.isFactoryDereference(name)) {
+			// 普通类型
 			if (beanInstance instanceof NullBean) {
 				return beanInstance;
 			}
