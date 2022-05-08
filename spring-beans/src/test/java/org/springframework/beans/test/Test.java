@@ -12,6 +12,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class Test {
 
 	public static void main(String[] args) {
+		// ClassPathXmlApplicationContext其实就是一个全局变量，里面包含事件发布器
 		ApplicationContext ctx = new ClassPathXmlApplicationContext(
 				"springAction.xml");
 		try{

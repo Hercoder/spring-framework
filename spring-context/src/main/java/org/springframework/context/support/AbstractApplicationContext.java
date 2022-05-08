@@ -530,6 +530,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
 			// 准备，记录容器的启动时间startupDate, 标记容器为激活，初始化上下文环境如文件路径信息，验证必填属性是否填写
+			// 初始化容器监听器，事件集合
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
@@ -693,6 +694,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		/*
 		 * 检验标记为必须存在的所有属性值在环境变量中是否可解析（是否存在/不为null）
 		 * 如果对应的value为null，那么抛出MissingRequiredPropertiesException异常
+		 * 是一些环境变量
 		 */
 		getEnvironment().validateRequiredProperties();
 
@@ -700,6 +702,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Store pre-refresh ApplicationListeners...
 		// 存储早期的应用监听器列表（此前已经初始化的监听器）
+		// 采用了监听器模式
 		if (this.earlyApplicationListeners == null) {
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
 		}
@@ -987,6 +990,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 		else {
 			//新建一个SimpleApplicationEventMulticaster实例，赋给applicationEventMulticaster属性
+			// 该组件会在容器启动时被自动创建,并以单例的形式存在,管理了所有的事件监听器,并提供针对所有容器内事件的发布功能
 			this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
 			//将初始化的广播器手动注册为一个名为"applicationEventMulticaster"的单例bean实例，因此我们在Spring管理的bean中也可以引入该对象
 			beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);

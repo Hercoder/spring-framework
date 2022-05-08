@@ -610,6 +610,7 @@ public abstract class ObjectUtils {
 		if (obj == null) {
 			return EMPTY_STRING;
 		}
+		// 对象的限定名+对象的哈希吗
 		return obj.getClass().getName() + "@" + getIdentityHexString(obj);
 	}
 
