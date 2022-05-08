@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+
+	<!-- 配置一个bean -->
+	<bean id="duke"  class="org.springframework.beans.test.Juggler" >
+		<!--给构造函数传递参数，没有的话则调用默认构造方法  -->
+		<constructor-arg value="15"/>
+	</bean>
+
+	<bean id="sonnet29" class="org.springframework.beans.test.Sonnet29"></bean>
+
+	<bean id="poeticDuke" class="org.springframework.beans.test.PoeticJuggler">
+		<constructor-arg value="22"></constructor-arg>
+		<!-- 基本数据类型参数用value=字符串（Spring根据构造参数类型自动解析字符串），
+						 引用类型的参数用ref= bean id -->
+		<constructor-arg ref="sonnet29"></constructor-arg>
+	</bean>
+
+	<!-- factory-method通过工厂方法将单例类配置为bean，因为Stage没有构造函数 -->
+	<bean id="theStage" class="org.springframework.beans.test.Stage" factory-method="getInstance">
+	</bean>
+
+</beans>
