@@ -144,6 +144,7 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 		setConfigLocations(configLocations);
 		// 通过构造函数传递的值就是true
 		if (refresh) {
+			// 这里就是真正启动的开始
 			refresh();
 		}
 	}
