@@ -139,7 +139,9 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 			throws BeansException {
 
 		super(parent);
+		// 这里生成配置文件的对象
 		setConfigLocations(configLocations);
+		// 通过构造函数传递的值就是true
 		if (refresh) {
 			refresh();
 		}
